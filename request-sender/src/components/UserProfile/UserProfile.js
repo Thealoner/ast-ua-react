@@ -10,7 +10,8 @@ export default class UserProfile extends React.Component {
             user: {
                 name: 'Default Name'
             },
-            isLoading: false
+            isLoading: false,
+            isCancelled: false
         };
         this.userId = React.createRef();
     }
@@ -20,7 +21,8 @@ export default class UserProfile extends React.Component {
     getUserAsync = async () => {
         try {
             this.setState({
-                isLoading: true
+                isLoading: true,
+                isCancelled: false
             });
             
             var res = await axios.get(apiPeopleUrl + this.userId.current.value + '/', {
@@ -33,7 +35,11 @@ export default class UserProfile extends React.Component {
             });
         } catch (e) {
             if (axios.isCancel(e)) {
-                console.log('Error: ', e.message); // => prints: Api is being canceled
+                console.log('Error: ', e.message);
+                this.setState({
+                    isLoading: false,
+                    isCancelled: true
+                });
             } else {
                 this.setState({
                     isLoading: false
@@ -44,7 +50,8 @@ export default class UserProfile extends React.Component {
 
     getUser() {
         this.setState({
-            isLoading: true
+            isLoading: true,
+            isCancelled: false
         });
 
         axios.get(apiPeopleUrl + this.userId.current.value + '/', {
@@ -72,7 +79,8 @@ export default class UserProfile extends React.Component {
         this.source.cancel('Operation cancelled');
         this.source = axios.CancelToken.source();
         this.setState({
-            isLoading: false
+            isLoading: false,
+            isCancelled: true
         });
     }
 
@@ -91,7 +99,7 @@ export default class UserProfile extends React.Component {
     }
 
     render() {
-        const { user, isLoading } = this.state;
+        const { user, isLoading, isCancelled } = this.state;
 
         return (
             <div>
@@ -101,7 +109,13 @@ export default class UserProfile extends React.Component {
                 <button onClick={() => this.getUser()}>Get User</button>
                 <button onClick={() => this.cancelAllRequests()}>Cancel</button>
                 <div>{isLoading ? 'Loading...' : ''}</div>
-                <div>{user.name ? user.name : ''}</div>
+                <div>
+                    {isCancelled ? (
+                        <button onClick={() => this.getUser()}>Try Again</button>
+                    ) : (
+                        <div>{user.name ? user.name : ''}</div>
+                    )}
+                </div>
             </div>
         );
     }
